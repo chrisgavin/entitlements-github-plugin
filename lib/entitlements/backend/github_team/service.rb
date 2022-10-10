@@ -87,20 +87,14 @@ module Entitlements
 
               begin
                 teamdata = graphql_team_data(team_identifier)
-                # The entitlement metadata may have GitHub.com Team metadata which it wants to set, so we must
-                # overwrite that metadata with what we get from the API
-                if teamdata[:parent_team_name].nil?
-                  team_metadata = entitlement_metadata
+                parent_team_metadata = {
+                  "parent_team_name" => teamdata[:parent_team_name]
+                }
+                if entitlement_metadata.nil?
+                  team_metadata = parent_team_metadata
                 else
-                  parent_team_metadata = {
-                    "parent_team_name" => teamdata[:parent_team_name]
-                  }
-                  if entitlement_metadata.nil?
-                    team_metadata = parent_team_metadata
-                  else
-                    # Always merge the current state metadata (cached or API call) into the entitlement metadata, so that the current state takes precedent
-                    team_metadata = entitlement_metadata.merge(parent_team_metadata)
-                  end
+                  # Always merge the current state metadata (cached or API call) into the entitlement metadata, so that the current state takes precedent
+                  team_metadata = entitlement_metadata.merge(parent_team_metadata)
                 end
 
                 team = Entitlements::Backend::GitHubTeam::Models::Team.new(
