@@ -144,6 +144,25 @@ describe Entitlements::Backend::GitHubTeam::Service do
       expect(result.metadata["parent_team_name"]).to eq("parent-cats")
     end
 
+    it "returns a Entitlements::Backend::GitHubTeam::Models::Team object without parent team when the team has no parent team but has entitlement metadata" do
+      stub_request(:post, "https://github.fake/api/v3/graphql").
+        with(
+          body: "{\"query\":\"{\\norganization(login: \\\"kittensinc\\\") {\\nteam(slug: \\\"cuddly-kittens\\\") {\\ndatabaseId\\nparentTeam {\\nslug\\n}\\nmembers(first: 100, membership: IMMEDIATE) {\\nedges {\\nnode {\\nlogin\\n}\\ncursor\\n}\\n}\\n}\\n}\\n}\"}"
+        ).to_return(status: 200, body: graphql_response(cuddly_kittens_no_metadata, 0, 100, parent_team: nil))
+
+      expect(logger).to receive(:debug).with("Setting up GitHub API connection to https://github.fake/api/v3/")
+      expect(logger).to receive(:debug).with("Loading GitHub team github.fake:kittensinc/cuddly-kittens")
+      expect(logger).not_to receive(:warn)
+
+      result = subject.read_team(entitlement_group_exists_no_metadata)
+      expect(result).to be_a_kind_of(Entitlements::Backend::GitHubTeam::Models::Team)
+      expect(result.team_id).to be_an(Integer)
+      expect(result.team_name).to eq("cuddly-kittens")
+      expect(result.members).to eq(cuddly_kittens_no_metadata.members)
+      expect(result.metadata.key?("parent_team_name")).to eq(true)
+      expect(result.metadata["parent_team_name"]).to eq(nil)
+    end
+
     it "returns a Entitlements::Backend::GitHubTeam::Models::Team object when forced to paginate" do
       allow(subject).to receive(:max_graphql_results).and_return(3)
 
