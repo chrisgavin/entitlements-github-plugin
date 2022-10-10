@@ -65,6 +65,7 @@ describe Entitlements do
   end
 
   it "logs appropriate informational messages to STDERR" do
+    puts @result.stderr
     expect(@result.stderr).to match(log("INFO", "CHANGE cn=app-aws-primary-admins,ou=Entitlements,ou=Groups,dc=kittens,dc=net in entitlements"))
     expect(@result.stderr).to match(log("INFO", ".  - blackmanx"))
     expect(@result.stderr).to match(log("INFO", "CHANGE cn=keyboard-cat,ou=Pizza_Teams,ou=Groups,dc=kittens,dc=net in pizza_teams"))
